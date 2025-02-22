@@ -5,6 +5,16 @@
 
 `default_nettype none
 
+module xor(input ded_input, 
+            input io_input, 
+            input carry_in,
+            output ded_output,
+            output carry_out);
+  assign ded_output = (~ded_input & io_input) | (ded_input & ~io_input);
+  assign carry_out = ded_input & io_input | ded_input & carry_in | io_input & carry_in;
+  
+endmodule
+
 module tt_um_example (
     input  wire [7:0] ui_in,    // Dedicated inputs
     output wire [7:0] uo_out,   // Dedicated outputs
@@ -35,14 +45,4 @@ module tt_um_example (
   // List all unused inputs to prevent warnings
   wire _unused = &{ena, clk, rst_n, 1'b0, uio_oe};
 
-endmodule
-
-module xor(input ded_input, 
-            input io_input, 
-            input carry_in,
-            output ded_output,
-            output carry_out);
-  assign ded_output = (~ded_input & io_input) | (ded_input & ~io_input);
-  assign carry_out = ded_input & io_input | ded_input & carry_in | io_input & carry_in;
-  
 endmodule
