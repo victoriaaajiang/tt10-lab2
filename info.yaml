@@ -1,9 +1,9 @@
 # Tiny Tapeout project information
-project: Double Multiplexer
-  title:        Two number output generator      # Project title
-  author:       Victoria Jiang      # Your name
-  discord:            # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
-  description:  Using two multiplexers, generates an output with a logic function that makes absolutely no sense!      # One line description of what your project does
+project: "Double Multiplexer"
+  title:        "Two number output generator"      # Project title
+  author:       "Victoria Jiang"      # Your name
+  discord:           "" # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
+  description:  "Using two multiplexers, generates an output with a logic function that makes absolutely no sense!"      # One line description of what your project does
   language:     "Verilog" # other examples include SystemVerilog, Amaranth, VHDL, etc
   clock_hz:     0       # Clock frequency in Hz (or 0 if not applicable)
 
@@ -22,14 +22,14 @@ project: Double Multiplexer
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
 pinout:
   # Inputs
-  ui[0]: 1
-  ui[1]: 1
-  ui[2]: 1
-  ui[3]: 1
-  ui[4]: 0
-  ui[5]: 0
-  ui[6]: 0
-  ui[7]: 0
+  ui[0]: "1"
+  ui[1]: "1"
+  ui[2]: "1"
+  ui[3]: "1"
+  ui[4]: "0"
+  ui[5]: "0"
+  ui[6]: "0"
+  ui[7]: "0"
 
   # Outputs
   uo[0]: ""
