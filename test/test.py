@@ -1,61 +1,50 @@
-# SPDX-FileCopyrightText: © 2024 Tiny Tapeout
-# SPDX-License-Identifier: Apache-2.0
+max_val = 255  # Maximum sum value allowed
+a_vals = [i for i in range(max_val + 1)]  # Fix range to include 255
+b_vals = [j for j in range(max_val + 1)]  # Fix range to include 255
 
-import cocotb
-from cocotb.clock import Clock
-from cocotb.triggers import ClockCycles
+for i in range(len(a_vals)):
+    for j in range(len(b_vals)):
+        dut.ui_in.value = a_vals[i]
+        dut.uio_in.value = b_vals[j]
 
-@cocotb.test()
-async def test_project(dut):
-    dut._log.info("Start")
+        await ClockCycles(dut.clk, 20)  # Allow enough time for DUT processing
 
-    # Set the clock period to 10 us (100 KHz)
-    clock = Clock(dut.clk, 10, units="us")
-    cocotb.start_soon(clock.start())
+        dut._log.info(f"Test case ui_in={a_vals[i]}, uio_in={b_vals[j]} -> uo_out={dut.uo_out.value}")
 
-    # Reset
-    dut._log.info("Reset")
-    dut.ena.value = 1
-    dut.ui_in.value = 0
-    dut.uio_in.value = 0
-    dut.rst_n.value = 0
-    await ClockCycles(dut.clk, 10)
-    dut.rst_n.value = 1
+        binary_A = format(a_vals[i], '08b')
+        binary_B = format(b_vals[j], '08b')
 
-    dut._log.info("Test project behavior")
+        dut._log.info(f"Value: {a_vals[i]} -> Binary: {binary_A}")
+        dut._log.info(f"Value: {b_vals[j]} -> Binary: {binary_B}")
 
-    # Test all combinations of ui_in and uio_in across 256 possible values
-    max_val = 256  # Maximum value for 8-bit input
-    for a in range(max_val):
-        for b in range(max_val):
-            # Set the input values
-            dut.ui_in.value = a
-            dut.uio_in.value = b
+        select_line_one = (a_vals[i] >> 7) & 1
+        select_line_two = (a_vals[i] >> 6) & 1
 
-            # Wait for one clock cycle to allow the output to stabilize
-            await ClockCycles(dut.clk, 1)
-
-            # Compute the expected output based on your module's logic
-            # Your module uses multiplexers to select between bits of ui_in and uio_in
-            # based on the value of ui_in[7] and uio_in[7].
-            # For simplicity, let's assume the logic is such that:
-            # uo_out[3:0] = ui_in[3:0] if ui_in[7] is 1, else uio_in[3:0]
-            # uo_out[7:4] = uo_out[3:0] if uio_in[7] is 1, else uio_in[7:4]
-
-            # Calculate the expected output
-            if (a >> 7) & 1:  # Check if ui_in[7] is 1
-                lower_bits = a & 0x0F  # ui_in[3:0]
+        output_arr = []
+        
+        for k in range(4):
+            if select_line_one == 0:
+                output_arr.append((a_vals[i] >> k) & 1)
             else:
-                lower_bits = b & 0x0F  # uio_in[3:0]
+                output_arr.append((b_vals[j] >> k) & 1)
 
-            if (b >> 7) & 1:  # Check if uio_in[7] is 1
-                upper_bits = lower_bits
+        for v in range(4, 8):
+            if select_line_two == 0:
+                output_arr.append((a_vals[i] >> v) & 1)
             else:
-                upper_bits = (b >> 4) & 0x0F  # uio_in[7:4]
+                output_arr.append((b_vals[j] >> v) & 1)
 
-            expected_output = (upper_bits << 4) | lower_bits
+        assert len(output_arr) == 8, f"output_arr length mismatch: {output_arr}"
 
-            # Compare the expected output with the actual output
-            assert dut.uo_out.value == expected_output, f"Test failed for ui_in={a}, uio_in={b}. Expected: {expected_output}, Got: {dut.uo_out.value}"
+        expected_out = 0
+        for bit_pos in range(8):  # Fix naming issue
+            expected_out |= output_arr[bit_pos] << (7 - bit_pos)
 
-    dut._log.info("All tests passed")
+        dut._log.info(f"Expected output in binary: {''.join(map(str, output_arr))} ({expected_out})")
+
+        assert int(dut.uo_out.value) == expected_out, (
+            f"Test failed for ui_in={a_vals[i]}, uio_in={b_vals[j]}. Expected {expected_out}, "
+            f"but got {dut.uo_out.value}"
+        )
+
+        dut._log.info(f"Test passed for ui_in={a_vals[i]}, uio_in={b_vals[j]} with uo_out={dut.uo_out.value}")
