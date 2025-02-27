@@ -27,18 +27,18 @@ module tt_um_third (
     //Refer uo_out as the C output from the report
 
     //first multiplexer in the diagram, assigning first four bits of the output
-    mux_two_one first(ui_in[0], uio_in[0], ui_in[7], uo_out[0]);
-    mux_two_one second(ui_in[1], uio_in[1], ui_in[7], uo_out[1]);
-    mux_two_one third(ui_in[2], uio_in[2], ui_in[7], uo_out[2]);
-    mux_two_one fourth(ui_in[3], uio_in[3], ui_in[7], uo_out[3]);
+    mux_two_one first(ui_in[0], uio_in[0], ui_in[0], uo_out[0]);
+    mux_two_one second(ui_in[1], uio_in[1], ui_in[0], uo_out[1]);
+    mux_two_one third(ui_in[2], uio_in[2], ui_in[0], uo_out[2]);
+    mux_two_one fourth(ui_in[3], uio_in[3], ui_in[0], uo_out[3]);
 
-    mux_two_one fifth(uo_out[0], uio_in[4], uio_in[7], uo_out[4]);
-    mux_two_one sixth(uo_out[1], uio_in[5], uio_in[7], uo_out[5]);
-    mux_two_one seventh(uo_out[2], uio_in[6], uio_in[7], uo_out[6]);
-    mux_two_one eighth(uo_out[3], uio_in[7], uio_in[7], uo_out[7]);
+    mux_two_one fifth(uo_out[0], uio_in[4], ui_in[1], uo_out[4]);//add assertion
+    mux_two_one sixth(uo_out[1], uio_in[5], ui_in[1], uo_out[5]);
+    mux_two_one seventh(uo_out[2], uio_in[6], ui_in[1], uo_out[6]);
+    mux_two_one eighth(uo_out[3], uio_in[7], ui_in[1], uo_out[7]);
 
     // List all unused inputs to prevent warnings
-    wire _unused = &{ena, clk, rst_n, 1'b0, uio_out, uio_oe};
+    wire _unused = &{ena, clk, rst_n, 1'b0, uio_in, uio_oe};
 
 endmodule
 
@@ -47,5 +47,5 @@ module mux_two_one(a, b, a_7, o);
     input a, b, a_7;
     output o;
 
-    assign o = (~a_7 & a) | (a_7 & b);
+    assign o = a_7 ? b : a
 endmodule
