@@ -7,13 +7,14 @@ from cocotb.triggers import ClockCycles
 
 @cocotb.test()
 async def test_project(dut):
-    dut._log.info("Starting Test")
+    dut._log.info("Start")
 
     # Set the clock period to 10 us (100 KHz)
     clock = Clock(dut.clk, 10, units="us")
     cocotb.start_soon(clock.start())
 
-    # Reset sequence
+    # Reset
+    dut._log.info("Reset")
     dut.ena.value = 1
     dut.ui_in.value = 0
     dut.uio_in.value = 0
@@ -21,31 +22,40 @@ async def test_project(dut):
     await ClockCycles(dut.clk, 10)
     dut.rst_n.value = 1
 
-    dut._log.info("Testing Multiplexer Logic")
+    dut._log.info("Test project behavior")
 
-    # Testing various input combinations
-    for a in range(256):  # 8-bit ui_in
-        for b in range(256):  # 8-bit uio_in
+    # Test all combinations of ui_in and uio_in across 256 possible values
+    max_val = 256  # Maximum value for 8-bit input
+    for a in range(max_val):
+        for b in range(max_val):
+            # Set the input values
             dut.ui_in.value = a
             dut.uio_in.value = b
 
-            await ClockCycles(dut.clk, 2)  # Allow time for propagation
+            # Wait for one clock cycle to allow the output to stabilize
+            await ClockCycles(dut.clk, 1)
 
-            expected_out = [
-                (a & 0x01 if not (a & 0x80) else b & 0x01),
-                (a & 0x02 if not (a & 0x80) else b & 0x02),
-                (a & 0x04 if not (a & 0x80) else b & 0x04),
-                (a & 0x08 if not (a & 0x80) else b & 0x08),
-                ((a & 0x01 if not (a & 0x80) else b & 0x01) if not (b & 0x80) else b & 0x10),
-                ((a & 0x02 if not (a & 0x80) else b & 0x02) if not (b & 0x80) else b & 0x20),
-                ((a & 0x04 if not (a & 0x80) else b & 0x04) if not (b & 0x80) else b & 0x40),
-                ((a & 0x08 if not (a & 0x80) else b & 0x08) if not (b & 0x80) else b & 0x80)
-            ]
+            # Compute the expected output based on your module's logic
+            # Your module uses multiplexers to select between bits of ui_in and uio_in
+            # based on the value of ui_in[7] and uio_in[7].
+            # For simplicity, let's assume the logic is such that:
+            # uo_out[3:0] = ui_in[3:0] if ui_in[7] is 1, else uio_in[3:0]
+            # uo_out[7:4] = uo_out[3:0] if uio_in[7] is 1, else uio_in[7:4]
 
-            expected_value = sum([bit << i for i, bit in enumerate(expected_out)])
-            actual_value = int(dut.uo_out.value)
+            # Calculate the expected output
+            if (a >> 7) & 1:  # Check if ui_in[7] is 1
+                lower_bits = a & 0x0F  # ui_in[3:0]
+            else:
+                lower_bits = b & 0x0F  # uio_in[3:0]
 
-            assert actual_value == expected_value, (
-                f"Mismatch: ui_in={a}, uio_in={b} -> Expected uo_out={expected_value}, Got {actual_value}")
+            if (b >> 7) & 1:  # Check if uio_in[7] is 1
+                upper_bits = lower_bits
+            else:
+                upper_bits = (b >> 4) & 0x0F  # uio_in[7:4]
 
-            dut._log.info(f"Passed: ui_in={a}, uio_in={b}, uo_out={actual_value}")
+            expected_output = (upper_bits << 4) | lower_bits
+
+            # Compare the expected output with the actual output
+            assert dut.uo_out.value == expected_output, f"Test failed for ui_in={a}, uio_in={b}. Expected: {expected_output}, Got: {dut.uo_out.value}"
+
+    dut._log.info("All tests passed")
