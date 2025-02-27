@@ -38,7 +38,7 @@ module tt_um_third (
     mux_two_one eighth(uo_out[3], uio_in[7], ui_in[1], uo_out[7]);
 
     // List all unused inputs to prevent warnings
-    wire _unused = &{ena, clk, rst_n, 1'b0, uio_in, uio_oe};
+    wire _unused = &{ena, clk, rst_n, 1'b0, uio_out, uio_oe};
 
 endmodule
 
